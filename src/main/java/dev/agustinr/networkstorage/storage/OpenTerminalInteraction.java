@@ -16,8 +16,10 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHa
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.client.SimpleBlockInteraction;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.accessor.SectionReader;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import dev.agustinr.networkstorage.network.BlockCells;
 import org.joml.Vector3i;
 
 import javax.annotation.Nonnull;
@@ -38,7 +40,7 @@ public class OpenTerminalInteraction extends SimpleBlockInteraction {
     @Override
     protected void interactWithBlock(@Nonnull World world, @Nonnull CommandBuffer<EntityStore> commandBuffer,
                                      @Nonnull InteractionType type, @Nonnull InteractionContext context,
-                                     @Nullable ItemStack itemInHand, @Nonnull Vector3i pos,
+                                     @Nullable ItemStack itemInHand, @Nonnull Vector3i targetPos,
                                      @Nonnull CooldownHandler cooldownHandler) {
         Ref<EntityStore> ref = context.getEntity();
         Store<EntityStore> store = ref.getStore();
@@ -49,7 +51,9 @@ public class OpenTerminalInteraction extends SimpleBlockInteraction {
             return;
         }
 
+        // La terminal ocupa dos celdas: el inventario y las sesiones abiertas usan la de origen.
         ChunkStore chunkStore = world.getChunkStore();
+        Vector3i pos = BlockCells.origin(new SectionReader(chunkStore), targetPos);
         Ref<ChunkStore> sectionRef = chunkStore.getChunkSectionReferenceAtBlock(pos.x, pos.y, pos.z);
         if (sectionRef == null || !sectionRef.isValid()) {
             fail(playerRef, "no se encontró el chunk de la terminal");

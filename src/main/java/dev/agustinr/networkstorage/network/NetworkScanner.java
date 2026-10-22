@@ -9,7 +9,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,6 +47,11 @@ public final class NetworkScanner {
         return NetworkBlocks.baseId(BlockType.getAssetMap().getAsset(blockId));
     }
 
+    /** Celdas que ocupa el bloque en pos (varias si es la terminal, que mide 2 de ancho). */
+    public List<Vector3i> cellsAt(@Nonnull Vector3i pos) {
+        return BlockCells.cellsAt(reader, pos);
+    }
+
     public static List<Vector3i> neighbors(Vector3i pos) {
         List<Vector3i> result = new ArrayList<>(NEIGHBORS.length);
         for (int[] d : NEIGHBORS) {
@@ -53,17 +60,28 @@ public final class NetworkScanner {
         return result;
     }
 
+    /** Vecinos de un bloque de varias celdas, sin contar sus propias celdas. */
+    public static List<Vector3i> neighbors(Collection<Vector3i> cells) {
+        Set<Vector3i> result = new LinkedHashSet<>();
+        for (Vector3i cell : cells) {
+            result.addAll(neighbors(cell));
+        }
+        result.removeAll(cells);
+        return new ArrayList<>(result);
+    }
+
     /**
      * Recorre la red que contiene a start. Si start no es un bloque del mod, devuelve null.
      *
-     * @param ignored posición que se trata como vacía (por ejemplo, un bloque que se está rompiendo)
+     * @param ignored celdas que se tratan como vacías (por ejemplo, un bloque que se está rompiendo)
      */
     @Nullable
-    public StorageNetwork scan(@Nonnull Vector3i start, @Nullable Vector3i ignored) {
-        if (start.equals(ignored) || !NetworkBlocks.isNetworkBlock(blockIdAt(start.x, start.y, start.z))) {
+    public StorageNetwork scan(@Nonnull Vector3i start, @Nonnull Collection<Vector3i> ignored) {
+        if (ignored.contains(start) || !NetworkBlocks.isNetworkBlock(blockIdAt(start.x, start.y, start.z))) {
             return null;
         }
-        List<Vector3i> terminals = new ArrayList<>();
+        // Las dos celdas de una terminal son la misma terminal: se guarda su celda de origen.
+        Set<Vector3i> terminals = new LinkedHashSet<>();
         List<Vector3i> units = new ArrayList<>();
         List<Vector3i> pipes = new ArrayList<>();
         Set<Vector3i> visited = new HashSet<>();
@@ -77,7 +95,7 @@ public final class NetworkScanner {
             Vector3i pos = queue.poll();
             String id = blockIdAt(pos.x, pos.y, pos.z);
             if (NetworkBlocks.isTerminal(id)) {
-                terminals.add(pos);
+                terminals.add(BlockCells.origin(reader, pos));
             } else if (NetworkBlocks.isUnit(id)) {
                 units.add(pos);
                 unitSlots += NetworkBlocks.unitSlots(id);
@@ -86,7 +104,7 @@ public final class NetworkScanner {
             }
 
             for (Vector3i next : neighbors(pos)) {
-                if (next.equals(ignored) || visited.contains(next)) {
+                if (ignored.contains(next) || visited.contains(next)) {
                     continue;
                 }
                 if (!NetworkBlocks.isNetworkBlock(blockIdAt(next.x, next.y, next.z))) {
@@ -100,11 +118,16 @@ public final class NetworkScanner {
                 queue.add(next);
             }
         }
-        return new StorageNetwork(terminals, units, pipes, unitSlots, truncated);
+        return new StorageNetwork(new ArrayList<>(terminals), units, pipes, visited, unitSlots, truncated);
+    }
+
+    @Nullable
+    public StorageNetwork scan(@Nonnull Vector3i start) {
+        return scan(start, Set.of());
     }
 
     /** Redes distintas que tocan alguna de las posiciones dadas (sin repetir). */
-    public List<StorageNetwork> scanAll(@Nonnull List<Vector3i> starts, @Nullable Vector3i ignored) {
+    public List<StorageNetwork> scanAll(@Nonnull List<Vector3i> starts, @Nonnull Collection<Vector3i> ignored) {
         List<StorageNetwork> networks = new ArrayList<>();
         for (Vector3i start : starts) {
             boolean alreadyFound = networks.stream().anyMatch(n -> n.contains(start));

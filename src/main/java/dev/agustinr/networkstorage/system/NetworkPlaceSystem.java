@@ -6,16 +6,19 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.event.events.ecs.PlaceBlockEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import dev.agustinr.networkstorage.network.BlockCells;
 import dev.agustinr.networkstorage.network.NetworkBlocks;
 import dev.agustinr.networkstorage.network.NetworkEvents;
 import org.joml.Vector3i;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 public class NetworkPlaceSystem extends EntityEventSystem<EntityStore, PlaceBlockEvent> {
 
@@ -40,7 +43,9 @@ public class NetworkPlaceSystem extends EntityEventSystem<EntityStore, PlaceBloc
         PlayerRef player = store.getComponent(chunk.getReferenceTo(index), PlayerRef.getComponentType());
 
         // Una red tiene exactamente una terminal y como mucho MAX_UNITS units.
-        NetworkEvents.PlacementTotals totals = NetworkEvents.totalsAfterPlacing(world, pos, placedId);
+        // La terminal ocupa 2 celdas: hay que mirar los vecinos de las dos, según para dónde mire.
+        List<Vector3i> cells = BlockCells.cells(BlockType.getAssetMap().getIndex(placedId), event.getRotation().index(), pos);
+        NetworkEvents.PlacementTotals totals = NetworkEvents.totalsAfterPlacing(world, cells, placedId);
         String problem = null;
         if (totals.terminals() > 1) {
             problem = "ese bloque conectaría dos terminales en la misma red.";

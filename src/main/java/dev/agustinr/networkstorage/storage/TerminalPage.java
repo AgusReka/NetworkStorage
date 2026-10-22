@@ -71,7 +71,7 @@ public class TerminalPage extends InteractiveCustomUIPage<TerminalPage.PageEvent
     }
 
     private int capacity() {
-        StorageNetwork network = new NetworkScanner(world).scan(pos, null);
+        StorageNetwork network = new NetworkScanner(world).scan(pos);
         return network != null ? network.capacity() : 0;
     }
 

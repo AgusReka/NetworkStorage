@@ -36,9 +36,20 @@
   },
   "BlockType": {
     "Material": "Solid",
-    "DrawType": "Cube",
+    "DrawType": "Model",
+    "Opacity": "Transparent",
+    "CustomModel": "Blocks/NetworkStorage/Terminal.blockymodel",
+    "CustomModelTexture": [
+      { "Weight": 1, "Texture": "Blocks/NetworkStorage/Terminal.png" }
+    ],
     "Group": "Metal",
-    "HitboxType": "Full",
+    "HitboxType": "NetworkStorage_Terminal",
+    "VariantRotation": "NESW",
+    "Support": {
+      "Down": [
+        { "FaceType": "Full" }
+      ]
+    },
     "Gathering": {
       "Breaking": {
         "GatherType": "Rocks"
@@ -47,9 +58,6 @@
     "BlockParticleSetId": "Metal",
     "BlockSoundSetId": "Metal",
     "PhysicalMaterialId": "Metal",
-    "Textures": [
-      { "Weight": 1, "UpDown": "BlockTextures/NetworkStorage_Terminal_Top.png", "Sides": "BlockTextures/NetworkStorage_Terminal_Side.png" }
-    ],
     "ParticleColor": "#706e64",
     "BlockEntity": {
       "Components": {

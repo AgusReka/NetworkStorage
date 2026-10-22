@@ -1,7 +1,7 @@
 # Genera los assets visuales del mod (estilo steampunk, inspirado en la tecnología goblin del juego):
 #  - Pipe: modelos de cada forma, textura, rule set de conexiones y JSON del bloque.
-#  - Texturas, íconos y JSON de la Terminal y de las Units (T1, T2, T3).
-#  - Íconos de inventario de los tres bloques.
+#  - Terminal: modelo de 2 bloques de ancho, textura, hitbox e ícono.
+#  - Units (T1, T2, T3): texturas, íconos y JSON.
 # Uso (desde la raíz del proyecto):  powershell -ExecutionPolicy Bypass -File tools\generate-assets.ps1
 #
 # Coordenadas de los modelos: un bloque mide 32 unidades (X/Z de -16 a 16, Y de 0 a 32).
@@ -14,8 +14,9 @@ $modelDir = Join-Path $res 'Common\Blocks\NetworkStorage'
 $blockTexDir = Join-Path $res 'Common\BlockTextures'
 $iconDir = Join-Path $res 'Common\Icons\ItemsGenerated'
 $ruleDir = Join-Path $res 'Server\Item\ConnectedBlockRuleSets'
+$hitboxDir = Join-Path $res 'Server\Item\Block\Hitboxes\NetworkStorage'
 $itemDir = Join-Path $res 'Server\Item\Items\NetworkStorage'
-New-Item -ItemType Directory -Force $modelDir, $blockTexDir, $iconDir, $ruleDir, $itemDir | Out-Null
+New-Item -ItemType Directory -Force $modelDir, $blockTexDir, $iconDir, $ruleDir, $hitboxDir, $itemDir | Out-Null
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 function Write-Json($path, $obj) {
@@ -54,8 +55,13 @@ $texCore = @{ x = 32; y = 0 }
 $texFlange = @{ x = 0; y = 32 }
 
 $script:nextId = 1
-function New-Box($name, $pos, $size, $tex) {
-    $face = @{ offset = @{ x = $tex.x; y = $tex.y }; mirror = @{ x = $false; y = $false }; angle = 0 }
+function New-Box($name, $pos, $size, $tex, $faceTex = @{}) {
+    # $tex: región de la textura para todas las caras; $faceTex: región distinta para algunas caras
+    $layout = [ordered]@{}
+    foreach ($f in 'front', 'back', 'left', 'right', 'top', 'bottom') {
+        $t = $(if ($faceTex.Contains($f)) { $faceTex[$f] } else { $tex })
+        $layout[$f] = @{ offset = @{ x = $t.x; y = $t.y }; mirror = @{ x = $false; y = $false }; angle = 0 }
+    }
     $script:nextId++
     return [ordered]@{
         id          = [string]$script:nextId
@@ -67,7 +73,7 @@ function New-Box($name, $pos, $size, $tex) {
             offset        = @{ x = 0; y = 0; z = 0 }
             stretch       = @{ x = 1; y = 1; z = 1 }
             settings      = @{ isPiece = $false; size = @{ x = $size[0]; y = $size[1]; z = $size[2] } }
-            textureLayout = [ordered]@{ front = $face; back = $face; left = $face; right = $face; top = $face; bottom = $face }
+            textureLayout = $layout
             unwrapMode    = 'custom'
             visible       = $true
             doubleSided   = $false
@@ -315,37 +321,112 @@ function Frame($bmp, $size, $thick, $r = 2) {
 }
 foreach ($t in $unitTiers) { UnitTextures $t }
 
-# --- Terminal: chapa de hierro con pantalla cian, manómetro y perillas de cobre ---
-$bmp = New-Object System.Drawing.Bitmap 32, 32
-Iron $bmp 0 0 32 32 9
-Bevel $bmp 0 0 32 32 $ironLight $ironDark
-foreach ($p in @(@(1, 1), @(29, 1), @(1, 29), @(29, 29), @(15, 1))) { Rivet $bmp $p[0] $p[1] }
-# Pantalla con un "rastro" de datos que la cruza
-Inset $bmp 5 4 22 14
-Glow $bmp 6 5 20 12
-foreach ($p in @(@(9, 13), @(10, 12), @(11, 12), @(12, 11), @(13, 11), @(14, 10), @(15, 9), @(16, 9), @(17, 8), @(18, 8), @(19, 9), @(20, 8), @(21, 7), @(22, 7))) {
+# --- Terminal: consola de 2 bloques de ancho (como la mesa de trabajo) ---
+# Ocupa el bloque de origen y el de su izquierda (X de -48 a 16), centrada en X = -16. El frente
+# ("front" en el modelo) mira a +Z, que es el lado que queda hacia el jugador al ponerla.
+# Atlas de 128x128; cada región se usa para las caras indicadas.
+$tIron = @{ x = 0; y = 0 }        # 64x32  chapa genérica (costados, fondo, techo)
+$tCabinet = @{ x = 64; y = 0 }    # 58x14  frente del mueble: dos puertas
+$tScreen = @{ x = 64; y = 14 }    # 54x16  frente del tablero: pantalla y manómetros
+$tDesk = @{ x = 0; y = 32 }       # 62x30  tapa del escritorio (las 2 primeras filas son el borde de hierro)
+$tCopper = @{ x = 64; y = 32 }    # 4x32   caños de cobre
+$tKeys = @{ x = 72; y = 32 }      # 30x8   panel de teclas
+$tKnob = @{ x = 104; y = 32 }     # 8x8    palancas
+
+$bmp = New-Object System.Drawing.Bitmap 128, 128
+Iron $bmp 0 0 64 32 7
+Bevel $bmp 0 0 64 32 $ironLight $ironDark
+Rivet $bmp 1 1
+
+# Frente del mueble: dos puertas hundidas con manijas de cobre
+Iron $bmp 64 0 58 14 3
+Bevel $bmp 64 0 58 14 $ironLight $ironDark
+foreach ($dx in @(3, 31)) {
+    Inset $bmp (64 + $dx) 2 24 10
+    Fill $bmp (65 + $dx) 3 22 8 $iron 5
+    Rust $bmp (65 + $dx) 3 22 8 1
+}
+foreach ($hx in @(24, 33)) { Fill $bmp (64 + $hx) 5 2 4 $copper 4; Px $bmp (64 + $hx) 5 $copperLight }
+Rivet $bmp 65 1; Rivet $bmp 119 1; Rivet $bmp 65 11; Rivet $bmp 119 11
+
+# Frente del tablero: pantalla cian en el medio y un manómetro a cada lado
+Iron $bmp 64 14 54 16 4
+Bevel $bmp 64 14 54 16 $ironLight $ironDark
+Gauge $bmp 70.5 21.5 4.2
+Gauge $bmp 111.5 21.5 4.2
+Inset $bmp 77 16 28 12
+Glow $bmp 78 17 26 10
+foreach ($p in @(@(80, 24), @(81, 23), @(82, 23), @(83, 22), @(84, 22), @(85, 21), @(86, 20), @(87, 20), @(88, 21), @(89, 21), @(90, 20), @(91, 19), @(92, 19), @(93, 20), @(94, 19), @(95, 18), @(96, 18), @(97, 19), @(98, 19), @(99, 18), @(100, 18))) {
     Px $bmp $p[0] $p[1] $glowCore
 }
-# Tubo de cobre bajo la pantalla
-Fill $bmp 4 20 24 3 $copper 5
-for ($x = 4; $x -lt 28; $x++) { Px $bmp $x 20 $copperLight; Px $bmp $x 22 $copperDark }
-Gauge $bmp 9.5 25.5 3.2
-foreach ($kx in @(17, 22)) {
-    Fill $bmp $kx 25 3 3 $copper 4
-    Bevel $bmp $kx 25 3 3 $copperLight $copperDark
-}
-Save $bmp (Join-Path $blockTexDir 'NetworkStorage_Terminal_Side.png')
 
-$bmp = New-Object System.Drawing.Bitmap 32, 32
-Iron $bmp 0 0 32 32 8
-Frame $bmp 32 3
-# Rejilla de ventilación con brillo cian por dentro
-for ($y = 8; $y -le 20; $y += 4) {
-    Fill $bmp 8 $y 16 2 $glowDark 4
-    for ($x = 9; $x -lt 23; $x++) { Px $bmp $x $y $glow -30 }
-    for ($x = 8; $x -lt 24; $x++) { Px $bmp $x ($y + 2) $ironLight -20 }
+# Tapa del escritorio: tablas con borde de hierro
+Planks $bmp 0 34 62 28 5 $false
+Iron $bmp 0 32 62 2 0
+for ($x = 0; $x -lt 62; $x++) { Px $bmp $x 32 $ironLight -10 }
+for ($y = 32; $y -lt 62; $y++) { Px $bmp 0 $y $ironDark; Px $bmp 61 $y $ironDark }
+
+# Caño de cobre: sombreado de tubo y anillos cada 8 píxeles
+for ($y = 32; $y -lt 64; $y++) {
+    $shade = @(-40, 30, 8, -30)
+    for ($i = 0; $i -lt 4; $i++) { Px $bmp (64 + $i) $y $copper ($shade[$i] + $rand.Next(-4, 5)) }
+    if (($y - 32) % 8 -eq 0) { for ($i = 0; $i -lt 4; $i++) { Px $bmp (64 + $i) $y $copperDark } }
 }
-Save $bmp (Join-Path $blockTexDir 'NetworkStorage_Terminal_Top.png')
+
+# Panel de teclas: base de cobre oscuro con teclas color crema y una luz cian
+Fill $bmp 72 32 30 8 $copperDark 4
+for ($x = 72; $x -lt 102; $x++) { Px $bmp $x 32 $copper 10 }
+for ($k = 0; $k -lt 6; $k++) {
+    foreach ($ky in @(34, 37)) { Fill $bmp (75 + $k * 4) $ky 3 2 $cream 6; Px $bmp (77 + $k * 4) ($ky + 1) $cream -40 }
+}
+Px $bmp 99 34 $glowCore; Px $bmp 99 35 $glow
+
+# Palancas: cobre con brillo
+Fill $bmp 104 32 8 8 $copper 6
+Bevel $bmp 104 32 8 8 $copperLight $copperDark
+Save $bmp (Join-Path $modelDir 'Terminal.png')
+
+$script:nextId = 1
+$terminalParts = @(
+    (New-Box 'Cabinet' @(0, 7, -1) @(58, 14, 26) $tIron @{ front = $tCabinet }),
+    (New-Box 'Desk' @(0, 15, 1) @(62, 2, 30) $tDesk),
+    (New-Box 'Board' @(0, 24, -10) @(54, 16, 10) $tIron @{ front = $tScreen }),
+    (New-Box 'Pipe_L' @(-29, 16, -13) @(4, 32, 4) $tCopper),
+    (New-Box 'Pipe_R' @(29, 16, -13) @(4, 32, 4) $tCopper),
+    (New-Box 'Keys' @(0, 17, 7) @(30, 2, 8) $tKeys),
+    (New-Box 'Lever_L' @(-21, 18.5, 7) @(3, 5, 3) $tKnob),
+    (New-Box 'Lever_R' @(21, 18.5, 7) @(3, 5, 3) $tKnob)
+)
+$terminalModel = [ordered]@{
+    nodes  = @(
+        [ordered]@{
+            id          = '1'
+            name        = 'Origin'
+            position    = @{ x = -16; y = 0; z = 0 }
+            orientation = @{ x = 0; y = 0; z = 0; w = 1 }
+            shape       = [ordered]@{
+                type          = 'none'
+                offset        = @{ x = 0; y = 0; z = 0 }
+                stretch       = @{ x = 1; y = 1; z = 1 }
+                settings      = @{ isPiece = $false }
+                textureLayout = @{}
+                unwrapMode    = 'custom'
+                visible       = $true
+                doubleSided   = $false
+                shadingMode   = 'flat'
+            }
+            children    = $terminalParts
+        }
+    )
+    format = 'prop'
+    lod    = 'auto'
+}
+Write-Json (Join-Path $modelDir 'Terminal.blockymodel') $terminalModel
+
+# Hitbox: el bloque de origen y el de su izquierda (en unidades de bloque); el juego pone el relleno
+Write-Json (Join-Path $hitboxDir 'NetworkStorage_Terminal.json') @{
+    Boxes = @(@{ Min = @{ X = -1; Y = 0; Z = 0 }; Max = @{ X = 1; Y = 1; Z = 1 } })
+}
 
 # --- Íconos (64x64) ---
 function IsoIcon($topPath, $sidePath, $outPath) {
@@ -368,7 +449,31 @@ function IsoIcon($topPath, $sidePath, $outPath) {
     $g.Dispose(); $top.Dispose(); $side.Dispose()
     Save $icon $outPath
 }
-IsoIcon (Join-Path $blockTexDir 'NetworkStorage_Terminal_Top.png') (Join-Path $blockTexDir 'NetworkStorage_Terminal_Side.png') (Join-Path $iconDir 'NetworkStorage_Terminal.png')
+# Ícono de la terminal: la consola vista de frente (dibujada a 32x32 y escalada x2)
+$small = New-Object System.Drawing.Bitmap 32, 32
+foreach ($px0 in @(2, 28)) {
+    for ($y = 3; $y -lt 28; $y++) { Px $small $px0 $y $copper 25; Px $small ($px0 + 1) $y $copper -30 }
+}
+Iron $small 4 5 24 9 2
+Bevel $small 4 5 24 9 $ironLight $ironDark
+Inset $small 9 6 14 7
+Glow $small 10 7 12 5
+Px $small 12 10 $glowCore; Px $small 13 9 $glowCore; Px $small 14 9 $glowCore; Px $small 15 8 $glowCore; Px $small 16 9 $glowCore; Px $small 17 8 $glowCore; Px $small 18 8 $glowCore
+foreach ($gx in @(5, 24)) { Fill $small $gx 8 3 3 $cream 0; Px $small ($gx + 1) 9 $ironDark; Px $small ($gx + 2) 8 $needle }
+Fill $small 1 14 30 2 $wood 4
+for ($x = 1; $x -lt 31; $x++) { Px $small $x 14 $ironLight -20 }
+Px $small 8 13 $copper 30; Px $small 23 13 $copper 30
+Iron $small 3 16 26 12 3
+Bevel $small 3 16 26 12 $ironLight $ironDark
+Inset $small 5 18 10 8; Inset $small 17 18 10 8
+Px $small 14 21 $copper; Px $small 14 22 $copper; Px $small 17 21 $copper; Px $small 17 22 $copper
+$icon = New-Object System.Drawing.Bitmap 64, 64
+$g = [System.Drawing.Graphics]::FromImage($icon)
+$g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+$g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::Half
+$g.DrawImage($small, 0, 0, 64, 64)
+$g.Dispose(); $small.Dispose()
+Save $icon (Join-Path $iconDir 'NetworkStorage_Terminal.png')
 foreach ($t in $unitTiers) { IsoIcon (Join-Path $blockTexDir "$($t.Id)_Top.png") (Join-Path $blockTexDir "$($t.Id)_Side.png") (Join-Path $iconDir "$($t.Id).png") }
 
 # Ícono del pipe: tubo de cobre horizontal con bridas y el núcleo de hierro con ventana cian (dibujado a 32x32 y escalado x2)

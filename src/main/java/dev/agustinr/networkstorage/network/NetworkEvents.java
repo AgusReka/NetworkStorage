@@ -20,14 +20,16 @@ public final class NetworkEvents {
     public record PlacementTotals(int terminals, int units) {}
 
     /**
-     * Totales de la red que quedaría si se pone un bloque en pos (puede unir varias redes).
-     * Se llama antes de que el bloque exista, así que se miran los vecinos.
+     * Totales de la red que quedaría si se pone un bloque (puede unir varias redes).
+     * Se llama antes de que el bloque exista, así que se miran los vecinos de todas sus celdas.
+     *
+     * @param cells celdas que va a ocupar el bloque (dos para la terminal)
      */
-    public static PlacementTotals totalsAfterPlacing(@Nonnull World world, @Nonnull Vector3i pos, @Nonnull String placedId) {
+    public static PlacementTotals totalsAfterPlacing(@Nonnull World world, @Nonnull List<Vector3i> cells, @Nonnull String placedId) {
         NetworkScanner scanner = new NetworkScanner(world);
         int terminals = NetworkBlocks.isTerminal(placedId) ? 1 : 0;
         int units = NetworkBlocks.isUnit(placedId) ? 1 : 0;
-        for (StorageNetwork network : scanner.scanAll(NetworkScanner.neighbors(pos), null)) {
+        for (StorageNetwork network : scanner.scanAll(NetworkScanner.neighbors(cells), cells)) {
             terminals += network.terminals().size();
             units += network.units().size();
         }
@@ -36,7 +38,7 @@ public final class NetworkEvents {
 
     /** Recalcula la red después de poner un bloque. */
     public static void afterPlace(@Nonnull World world, @Nonnull Vector3i pos) {
-        StorageNetwork network = new NetworkScanner(world).scan(pos, null);
+        StorageNetwork network = new NetworkScanner(world).scan(pos);
         if (network == null) {
             LOGGER.atWarning().log("[NetworkStorage] Se puso un bloque en " + StorageNetwork.format(pos) + " pero no se encontró al recalcular");
             return;
@@ -44,12 +46,18 @@ public final class NetworkEvents {
         report(world, "Bloque puesto en " + StorageNetwork.format(pos), List.of(network));
     }
 
-    /** Recalcula las redes vecinas después de romper un bloque (puede haber partido la red en varias). */
-    public static void afterBreak(@Nonnull World world, @Nonnull Vector3i pos) {
-        List<StorageNetwork> networks = new NetworkScanner(world).scanAll(NetworkScanner.neighbors(pos), pos);
-        report(world, "Bloque roto en " + StorageNetwork.format(pos), networks);
+    /**
+     * Recalcula las redes vecinas después de romper un bloque (puede haber partido la red en varias).
+     *
+     * @param cells celdas que ocupaba el bloque, tomadas antes de romperlo
+     */
+    public static void afterBreak(@Nonnull World world, @Nonnull List<Vector3i> cells) {
+        List<StorageNetwork> networks = new NetworkScanner(world).scanAll(NetworkScanner.neighbors(cells), cells);
+        report(world, "Bloque roto en " + StorageNetwork.format(cells.getFirst()), networks);
         // Si lo que se rompió era una terminal, sus ventanas abiertas muestran que ya no existe.
-        TerminalSessions.refreshAll(world, pos);
+        for (Vector3i cell : cells) {
+            TerminalSessions.refreshAll(world, cell);
+        }
     }
 
     private static void report(@Nonnull World world, String header, List<StorageNetwork> networks) {

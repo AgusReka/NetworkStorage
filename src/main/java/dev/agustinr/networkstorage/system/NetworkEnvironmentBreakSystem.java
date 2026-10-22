@@ -8,9 +8,11 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.agustinr.networkstorage.network.NetworkBlocks;
 import dev.agustinr.networkstorage.network.NetworkEvents;
+import dev.agustinr.networkstorage.network.NetworkScanner;
 import org.joml.Vector3i;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 /**
  * Bloques rotos sin jugador (por ejemplo, explosiones o fuego). El juego dispara este evento a nivel
@@ -30,6 +32,7 @@ public class NetworkEnvironmentBreakSystem extends WorldEventSystem<EntityStore,
         }
         World world = store.getExternalData().getWorld();
         Vector3i pos = new Vector3i(event.getTargetBlock());
-        world.execute(() -> NetworkEvents.afterBreak(world, pos));
+        List<Vector3i> cells = new NetworkScanner(world).cellsAt(pos);
+        world.execute(() -> NetworkEvents.afterBreak(world, cells));
     }
 }

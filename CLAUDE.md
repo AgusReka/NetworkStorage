@@ -28,7 +28,7 @@ Requisito previo del usuario: launcher de Hytale instalado y actualizado, con se
 
 | Bloque | Función |
 |---|---|
-| **Storage Terminal** | Centro de la red. **Guarda todos los ítems** y abre la ventana de la red para ver, meter y sacar ítems. Una red tiene exactamente una terminal (no se permite poner un bloque que conecte dos). |
+| **Storage Terminal** | Centro de la red. **Guarda todos los ítems** y abre la ventana de la red para ver, meter y sacar ítems. Una red tiene exactamente una terminal (no se permite poner un bloque que conecte dos). Es una consola de **2 bloques de ancho** (como la mesa de trabajo): el juego pone un bloque relleno (filler) con el mismo id en la segunda celda. El inventario vive en la celda de origen; usar `BlockCells` para resolver el origen y las celdas. |
 | **Storage Unit** (T1/T2/T3) | No se puede abrir. Solo aporta capacidad a la red: **T1 = 18, T2 = 36, T3 = 54 slots**. Máximo **16 units por red** (se impide poner el bloque que lo supere). T1 se craftea con la mesa de trabajo en nivel 1; T2 = 1 Unit T1 + 5 cobalto + 5 torio (mesa nivel 2); T3 = 1 Unit T2 + 5 adamantita + 5 mitrilo (mesa nivel 3). La T1 conserva el id `NetworkStorage_Unit`. |
 | **Storage Pipe** | Solo conecta bloques de la red, no aporta slots. Conecta por las 6 caras. Cambia de forma según sus vecinos (10 formas, `ConnectedBlockRuleSet` "Patterned"; la Terminal y la Unit también cuentan como conexión). |
 

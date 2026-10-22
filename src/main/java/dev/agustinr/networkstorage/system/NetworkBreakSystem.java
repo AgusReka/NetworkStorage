@@ -12,10 +12,12 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.agustinr.networkstorage.network.NetworkBlocks;
 import dev.agustinr.networkstorage.network.NetworkEvents;
+import dev.agustinr.networkstorage.network.NetworkScanner;
 import dev.agustinr.networkstorage.storage.TerminalStorage;
 import org.joml.Vector3i;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 public class NetworkBreakSystem extends EntityEventSystem<EntityStore, BreakBlockEvent> {
 
@@ -43,10 +45,12 @@ public class NetworkBreakSystem extends EntityEventSystem<EntityStore, BreakBloc
             return;
         }
 
-        // El bloque se saca después del evento; recalculamos en el próximo tick.
+        // El bloque se saca después del evento; recalculamos en el próximo tick. Las celdas se toman
+        // ahora, mientras el bloque existe (la terminal ocupa dos).
+        List<Vector3i> cells = new NetworkScanner(world).cellsAt(pos);
         world.execute(() -> {
             if (!event.isCancelled()) {
-                NetworkEvents.afterBreak(world, pos);
+                NetworkEvents.afterBreak(world, cells);
             }
         });
     }

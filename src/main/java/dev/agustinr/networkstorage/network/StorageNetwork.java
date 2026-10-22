@@ -3,13 +3,16 @@ package dev.agustinr.networkstorage.network;
 import org.joml.Vector3i;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Resultado de recorrer una red: los bloques conectados entre sí.
  *
+ * @param cells     todas las celdas de la red (las dos de la terminal incluidas)
  * @param unitSlots suma de los slots que aportan las units, según su tier
  */
-public record StorageNetwork(List<Vector3i> terminals, List<Vector3i> units, List<Vector3i> pipes, int unitSlots,
+public record StorageNetwork(List<Vector3i> terminals, List<Vector3i> units, List<Vector3i> pipes, Set<Vector3i> cells,
+                             int unitSlots,
                              boolean truncated) {
 
     public int capacity() {
@@ -17,7 +20,7 @@ public record StorageNetwork(List<Vector3i> terminals, List<Vector3i> units, Lis
     }
 
     public boolean contains(Vector3i pos) {
-        return terminals.contains(pos) || units.contains(pos) || pipes.contains(pos);
+        return cells.contains(pos);
     }
 
     public String describe() {
