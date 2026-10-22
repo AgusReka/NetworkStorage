@@ -1,0 +1,37 @@
+$C = "../Common.ui";
+
+// Un ítem en la grilla: ícono con su cantidad abajo a la derecha
+Group {
+  Anchor: (Width: 62, Height: 62);
+  Padding: (Full: 2);
+
+  ItemSlotButton #Button {
+    Anchor: (Full: 0);
+    LayoutMode: Full;
+    Padding: 2;
+    Style: (
+      Default: (Background: #1a2530),
+      Hovered: (Background: #c9a050),
+      Pressed: (Background: #a08040),
+      Sounds: $C.@ButtonSounds,
+    );
+
+    ItemSlot #Item {
+      Anchor: (Full: 0);
+      ShowQualityBackground: true;
+      ShowQuantity: false;
+    }
+
+    Label #Quantity {
+      Anchor: (Right: 4, Bottom: 2);
+      Style: (
+        FontSize: 14,
+        TextColor: #ffffff,
+        HorizontalAlignment: End,
+        VerticalAlignment: End,
+        RenderBold: true,
+      );
+      Text: "";
+    }
+  }
+}

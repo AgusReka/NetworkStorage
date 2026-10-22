@@ -1,0 +1,25 @@
+{
+    "Group": "agustinr",
+    "Name": "NetworkStorage",
+    "Version": "0.1.0",
+    "Description": "Red de almacenamiento centralizada (Storage Core, Units y Terminal), inspirada en Magic Storage.",
+    "Authors": [
+        {
+            "Name": "agustinr"
+        }
+    ],
+    "Website": "",
+    "ServerVersion": ">=0.7.2 <0.8.0",
+    "Dependencies": {
+        "Hytale:AssetModule": "*"
+    },
+    "OptionalDependencies": {
+        
+    },
+    "DisabledByDefault": false,
+    "Main": "dev.agustinr.networkstorage.NetworkStoragePlugin",
+    "IncludesAssetPack": true,
+    "UpdateChecker": {
+        "CurseForge": ""
+    }
+}

@@ -1,0 +1,11 @@
+items.NetworkStorage_Unit.name=Storage Unit
+items.NetworkStorage_Unit.description=Adds 18 slots (two rows) to a connected network.
+items.NetworkStorage_Terminal.name=Storage Terminal
+items.NetworkStorage_Terminal.description=Heart of a storage network. Stores every item in the network and opens it to view, insert and take items.
+networkstorage.ui.title=Storage Network
+networkstorage.ui.empty=The network is empty.
+networkstorage.ui.inventory=Your inventory
+networkstorage.ui.takeHint=Left click: take a stack. Right click: take one.
+networkstorage.ui.depositHint=Left click: store the stack. Right click: store one.
+items.NetworkStorage_Pipe.name=Storage Pipe
+items.NetworkStorage_Pipe.description=Connects storage blocks without adding capacity.

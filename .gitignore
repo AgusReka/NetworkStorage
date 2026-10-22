@@ -1,0 +1,14 @@
+.gradle/
+build/
+out/
+run/
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+# Mods de terceros usados solo como referencia (no redistribuir)
+reference/

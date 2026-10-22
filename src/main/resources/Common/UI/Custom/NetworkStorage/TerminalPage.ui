@@ -1,0 +1,92 @@
+$C = "../Common.ui";
+
+$C.@PageOverlay {}
+
+$C.@DecoratedContainer {
+  Anchor: (Width: 1040, Height: 660);
+
+  #Title {
+    Group {
+      LayoutMode: Left;
+      $C.@Title {
+        @Text = %server.networkstorage.ui.title;
+      }
+    }
+
+    $C.@HeaderSearch {}
+  }
+
+  #Content {
+    LayoutMode: Left;
+
+    // Ítems de la red: uno por tipo, con su total
+    Group #NetworkPanel {
+      FlexWeight: 3;
+      LayoutMode: Top;
+
+      Label #CapacityLabel {
+        Anchor: (Height: 26);
+        Style: (...$C.@DefaultLabelStyle, RenderBold: true);
+      }
+
+      Group #NetworkScroll {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+        Padding: (Top: 6, Right: 6);
+
+        Label #EmptyLabel {
+          Anchor: (Height: 30);
+          Text: %server.networkstorage.ui.empty;
+          Style: (...$C.@DefaultLabelStyle, HorizontalAlignment: Center);
+          Visible: false;
+        }
+
+        Group #NetworkGrid {
+          LayoutMode: LeftWrap;
+        }
+      }
+
+      Label {
+        Anchor: (Height: 22);
+        Text: %server.networkstorage.ui.takeHint;
+        Style: (FontSize: 13, TextColor: #878e9c);
+      }
+    }
+
+    Group {
+      Anchor: (Width: 18);
+    }
+
+    // Inventario del jugador
+    Group #PlayerPanel {
+      FlexWeight: 2;
+      LayoutMode: Top;
+
+      Label {
+        Anchor: (Height: 26);
+        Text: %server.networkstorage.ui.inventory;
+        Style: (...$C.@DefaultLabelStyle, RenderBold: true);
+      }
+
+      Group #PlayerScroll {
+        FlexWeight: 1;
+        LayoutMode: TopScrolling;
+        ScrollbarStyle: $C.@DefaultScrollbarStyle;
+        Padding: (Top: 6, Right: 6);
+
+        Group #PlayerGrid {
+          LayoutMode: LeftWrap;
+        }
+      }
+
+      Label {
+        Anchor: (Height: 22);
+        Text: %server.networkstorage.ui.depositHint;
+        Style: (FontSize: 13, TextColor: #878e9c);
+      }
+    }
+  }
+}
+
+$C.@BackButton {}
