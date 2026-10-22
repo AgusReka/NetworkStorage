@@ -7,6 +7,7 @@ import dev.agustinr.networkstorage.storage.OpenTerminalInteraction;
 import dev.agustinr.networkstorage.system.NetworkBreakSystem;
 import dev.agustinr.networkstorage.system.NetworkEnvironmentBreakSystem;
 import dev.agustinr.networkstorage.system.NetworkPlaceSystem;
+import dev.agustinr.networkstorage.system.TerminalExplosionGuardSystem;
 
 import javax.annotation.Nonnull;
 
@@ -23,6 +24,7 @@ public class NetworkStoragePlugin extends JavaPlugin {
         getEntityStoreRegistry().registerSystem(new NetworkPlaceSystem());
         getEntityStoreRegistry().registerSystem(new NetworkBreakSystem());
         getEntityStoreRegistry().registerSystem(new NetworkEnvironmentBreakSystem());
+        getEntityStoreRegistry().registerSystem(new TerminalExplosionGuardSystem());
         getLogger().atInfo().log("Network Storage cargado");
     }
 }

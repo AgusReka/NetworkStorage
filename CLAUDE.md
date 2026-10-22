@@ -67,7 +67,9 @@ El crafteo NO se implementa: Hytale ya permite craftear con ítems de contenedor
 
 ### Romper la terminal
 
-A definir. Opción sugerida: impedir romperla mientras tenga ítems, o dropear todo su contenido.
+No se puede romper mientras tenga ítems: un jugador tiene que vaciarla antes (`NetworkBreakSystem`) y las explosiones no le hacen daño (`TerminalExplosionGuardSystem`). Vacía se rompe normalmente.
+
+Ojo: los eventos de bloques sin jugador (`DamageBlockEvent` de explosiones, `EnvironmentBreakBlockEvent`) se disparan a nivel de mundo y se escuchan con `WorldEventSystem`, no con `EntityEventSystem`.
 
 ## Plan de desarrollo
 
