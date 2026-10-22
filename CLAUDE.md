@@ -29,10 +29,10 @@ Requisito previo del usuario: launcher de Hytale instalado y actualizado, con se
 | Bloque | Función |
 |---|---|
 | **Storage Terminal** | Centro de la red. **Guarda todos los ítems** y abre la ventana de la red para ver, meter y sacar ítems. Una red tiene exactamente una terminal (no se permite poner un bloque que conecte dos). |
-| **Storage Unit** | No se puede abrir. Solo aporta capacidad a la red: **18 slots (2 filas, como un cofre chico)**. Puede haber tiers con distinta capacidad. |
+| **Storage Unit** (T1/T2/T3) | No se puede abrir. Solo aporta capacidad a la red: **T1 = 18, T2 = 36, T3 = 54 slots**. Máximo **16 units por red** (se impide poner el bloque que lo supere). T1 se craftea con la mesa de trabajo en nivel 1; T2 = 1 Unit T1 + 5 cobalto + 5 torio (mesa nivel 2); T3 = 1 Unit T2 + 5 adamantita + 5 mitrilo (mesa nivel 3). La T1 conserva el id `NetworkStorage_Unit`. |
 | **Storage Pipe** | Solo conecta bloques de la red, no aporta slots. Conecta por las 6 caras. Cambia de forma según sus vecinos (10 formas, `ConnectedBlockRuleSet` "Patterned"; la Terminal y la Unit también cuentan como conexión). |
 
-Los assets del pipe (modelos, textura, rule set y JSON del bloque) se generan con `tools/generate-assets.ps1` (que también genera las texturas de la Terminal y la Unit y los íconos): **no editarlos a mano**, cambiar el script y volver a correrlo.
+Los assets del pipe (modelos, textura, rule set y JSON del bloque) y los de las Units (texturas, íconos y JSON de los 3 tiers) se generan con `tools/generate-assets.ps1` (que también genera las texturas de la Terminal): **no editarlos a mano**, cambiar el script y volver a correrlo.
 
 Ya no existe un bloque Core separado: la terminal cumple ese rol.
 

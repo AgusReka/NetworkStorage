@@ -1,6 +1,6 @@
 # Genera los assets visuales del mod (estilo steampunk, inspirado en la tecnología goblin del juego):
 #  - Pipe: modelos de cada forma, textura, rule set de conexiones y JSON del bloque.
-#  - Texturas de la Terminal y la Unit.
+#  - Texturas, íconos y JSON de la Terminal y de las Units (T1, T2, T3).
 #  - Íconos de inventario de los tres bloques.
 # Uso (desde la raíz del proyecto):  powershell -ExecutionPolicy Bypass -File tools\generate-assets.ps1
 #
@@ -226,15 +226,6 @@ function Planks($bmp, $x0, $y0, $w, $h, $plank, $vertical) {
         }
     }
 }
-function Frame($bmp, $size, $thick) {
-    # Marco de hierro oxidado con remaches en las esquinas y al medio
-    Iron $bmp 0 0 $size $thick 2; Iron $bmp 0 ($size - $thick) $size $thick 2
-    Iron $bmp 0 0 $thick $size 2; Iron $bmp ($size - $thick) 0 $thick $size 2
-    Bevel $bmp 0 0 $size $size $ironLight $ironDark
-    Inset $bmp $thick $thick ($size - 2 * $thick) ($size - 2 * $thick)
-    $m = [int]($size / 2) - 1; $e = $size - $thick + [int](($thick - 2) / 2); $s = [int](($thick - 2) / 2)
-    foreach ($p in @(@($s, $s), @($e, $s), @($s, $e), @($e, $e), @($m, $s), @($m, $e), @($s, $m), @($e, $m))) { Rivet $bmp $p[0] $p[1] }
-}
 function Save($bmp, $path) { $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose() }
 
 # --- Pipe (atlas 64x64) ---
@@ -265,26 +256,64 @@ Fill $bmp 3 35 4 4 $copperDark 4
 foreach ($p in @(@(1, 1), @(7, 1), @(1, 7), @(7, 7))) { Rivet $bmp $p[0] (32 + $p[1]) }
 Save $bmp (Join-Path $modelDir 'Pipe.png')
 
-# --- Unit: cajón de madera oscura con marco de hierro oxidado ---
-$bmp = New-Object System.Drawing.Bitmap 32, 32
-Planks $bmp 0 0 32 32 6 $true
-Frame $bmp 32 4
-Iron $bmp 4 14 24 4 2
-Bevel $bmp 4 14 24 4 $ironLight $ironDark
-Rivet $bmp 7 15; Rivet $bmp 23 15
-# Placa de cobre en el centro
-Fill $bmp 13 13 6 6 $copper 6
-Bevel $bmp 13 13 6 6 $copperLight $copperDark
-Px $bmp 15 15 $copperDark; Px $bmp 16 15 $copperDark; Px $bmp 15 16 $copperDark; Px $bmp 16 16 $ironDark
-Save $bmp (Join-Path $blockTexDir 'NetworkStorage_Unit_Side.png')
+# --- Units: cajón de madera oscura con marco de metal; cada tier cambia el metal ---
+# Slots y Max tienen que coincidir con NetworkBlocks.java. Cada mejora usa la Unit del tier anterior.
+$unitTiers = @(
+    [ordered]@{ Id = 'NetworkStorage_Unit'; Tier = 1; Rust = 2; Particle = '#603e26'
+        Metal = @(112, 110, 100); MetalDark = @(52, 50, 46); MetalLight = @(176, 172, 160); Plate = 'Copper'
+        Input = @(@{ ItemId = 'Ingredient_Bar_Iron'; Quantity = 5 }, @{ ItemId = 'Ingredient_Bar_Copper'; Quantity = 5 }) },
+    [ordered]@{ Id = 'NetworkStorage_Unit_T2'; Tier = 2; Rust = 0; Particle = '#46609a'
+        Metal = @(70, 96, 150); MetalDark = @(30, 40, 72); MetalLight = @(144, 172, 222); Plate = 'Copper'
+        Input = @(@{ ItemId = 'NetworkStorage_Unit'; Quantity = 1 }, @{ ItemId = 'Ingredient_Bar_Cobalt'; Quantity = 5 }, @{ ItemId = 'Ingredient_Bar_Thorium'; Quantity = 5 }) },
+    [ordered]@{ Id = 'NetworkStorage_Unit_T3'; Tier = 3; Rust = 0; Particle = '#963430'
+        Metal = @(150, 52, 48); MetalDark = @(72, 20, 22); MetalLight = @(226, 122, 102); Plate = 'Glow'
+        Input = @(@{ ItemId = 'NetworkStorage_Unit_T2'; Quantity = 1 }, @{ ItemId = 'Ingredient_Bar_Adamantite'; Quantity = 5 }, @{ ItemId = 'Ingredient_Bar_Mithril'; Quantity = 5 }) }
+)
 
-$bmp = New-Object System.Drawing.Bitmap 32, 32
-Planks $bmp 0 0 32 32 6 $false
-Frame $bmp 32 4
-Iron $bmp 14 4 4 24 2
-Bevel $bmp 14 4 4 24 $ironLight $ironDark
-Rivet $bmp 15 7; Rivet $bmp 15 23
-Save $bmp (Join-Path $blockTexDir 'NetworkStorage_Unit_Top.png')
+function UnitTextures($t) {
+    # Las funciones de dibujo leen $iron/$ironDark/$ironLight: acá se pisan con el metal del tier
+    $iron = $t.Metal; $ironDark = $t.MetalDark; $ironLight = $t.MetalLight
+    $bmp = New-Object System.Drawing.Bitmap 32, 32
+    Planks $bmp 0 0 32 32 6 $true
+    Frame $bmp 32 4 $t.Rust
+    Iron $bmp 4 14 24 4 $t.Rust
+    Bevel $bmp 4 14 24 4 $ironLight $ironDark
+    Rivet $bmp 7 15; Rivet $bmp 23 15
+    # Placa en el centro: cobre o, en el tier más alto, un cristal de energía
+    if ($t.Plate -eq 'Glow') {
+        Inset $bmp 12 12 8 8
+        Glow $bmp 13 13 6 6
+        Px $bmp 15 14 $glowCore
+    } else {
+        Fill $bmp 13 13 6 6 $copper 6
+        Bevel $bmp 13 13 6 6 $copperLight $copperDark
+        Px $bmp 15 15 $copperDark; Px $bmp 16 15 $copperDark; Px $bmp 15 16 $copperDark; Px $bmp 16 16 $ironDark
+    }
+    # Marcas del tier sobre la banda: I, II o III
+    for ($i = 0; $i -lt $t.Tier; $i++) {
+        $x = 26 - 2 * $i
+        Px $bmp $x 6 $ironLight 20; Px $bmp $x 7 $ironLight 20; Px $bmp $x 8 $ironLight
+    }
+    Save $bmp (Join-Path $blockTexDir "$($t.Id)_Side.png")
+
+    $bmp = New-Object System.Drawing.Bitmap 32, 32
+    Planks $bmp 0 0 32 32 6 $false
+    Frame $bmp 32 4 $t.Rust
+    Iron $bmp 14 4 4 24 $t.Rust
+    Bevel $bmp 14 4 4 24 $ironLight $ironDark
+    Rivet $bmp 15 7; Rivet $bmp 15 23
+    Save $bmp (Join-Path $blockTexDir "$($t.Id)_Top.png")
+}
+function Frame($bmp, $size, $thick, $r = 2) {
+    # Marco de metal con remaches en las esquinas y al medio (el óxido depende del tier)
+    Iron $bmp 0 0 $size $thick $r; Iron $bmp 0 ($size - $thick) $size $thick $r
+    Iron $bmp 0 0 $thick $size $r; Iron $bmp ($size - $thick) 0 $thick $size $r
+    Bevel $bmp 0 0 $size $size $ironLight $ironDark
+    Inset $bmp $thick $thick ($size - 2 * $thick) ($size - 2 * $thick)
+    $m = [int]($size / 2) - 1; $e = $size - $thick + [int](($thick - 2) / 2); $s = [int](($thick - 2) / 2)
+    foreach ($p in @(@($s, $s), @($e, $s), @($s, $e), @($e, $e), @($m, $s), @($m, $e), @($s, $m), @($e, $m))) { Rivet $bmp $p[0] $p[1] }
+}
+foreach ($t in $unitTiers) { UnitTextures $t }
 
 # --- Terminal: chapa de hierro con pantalla cian, manómetro y perillas de cobre ---
 $bmp = New-Object System.Drawing.Bitmap 32, 32
@@ -340,7 +369,7 @@ function IsoIcon($topPath, $sidePath, $outPath) {
     Save $icon $outPath
 }
 IsoIcon (Join-Path $blockTexDir 'NetworkStorage_Terminal_Top.png') (Join-Path $blockTexDir 'NetworkStorage_Terminal_Side.png') (Join-Path $iconDir 'NetworkStorage_Terminal.png')
-IsoIcon (Join-Path $blockTexDir 'NetworkStorage_Unit_Top.png') (Join-Path $blockTexDir 'NetworkStorage_Unit_Side.png') (Join-Path $iconDir 'NetworkStorage_Unit.png')
+foreach ($t in $unitTiers) { IsoIcon (Join-Path $blockTexDir "$($t.Id)_Top.png") (Join-Path $blockTexDir "$($t.Id)_Side.png") (Join-Path $iconDir "$($t.Id).png") }
 
 # Ícono del pipe: tubo de cobre horizontal con bridas y el núcleo de hierro con ventana cian (dibujado a 32x32 y escalado x2)
 $small = New-Object System.Drawing.Bitmap 32, 32
@@ -381,7 +410,7 @@ foreach ($shapeName in $shapes.Keys) {
     $ruleShapes[$shapeName] = [ordered]@{ Type = 'Templated'; FaceTags = $allFaces; TemplateId = $shapeName }
 }
 $ruleShapes['Terminal'] = [ordered]@{ Type = 'Block'; Block = 'NetworkStorage_Terminal'; FaceTags = $allFaces }
-$ruleShapes['Unit'] = [ordered]@{ Type = 'Block'; Block = 'NetworkStorage_Unit'; FaceTags = $allFaces }
+foreach ($t in $unitTiers) { $ruleShapes[$t.Id] = [ordered]@{ Type = 'Block'; Block = $t.Id; FaceTags = $allFaces } }
 
 $patterns = @()
 foreach ($shapeName in $shapes.Keys) {
@@ -462,4 +491,40 @@ $pipe = [ordered]@{
 }
 Write-Json (Join-Path $itemDir 'NetworkStorage_Pipe.json') $pipe
 
-Write-Host "Generados: $($shapes.Count) modelos del pipe, texturas, iconos, rule set y bloque del pipe."
+
+# Units: un JSON por tier. La mesa de trabajo tiene que estar en el nivel del tier para craftearla.
+foreach ($t in $unitTiers) {
+    $unit = [ordered]@{
+        TranslationProperties = [ordered]@{
+            Name        = "server.items.$($t.Id).name"
+            Description = "server.items.$($t.Id).description"
+        }
+        PlayerAnimationsId    = 'Block'
+        Categories            = @('Furniture.Containers')
+        Icon                  = "Icons/ItemsGenerated/$($t.Id).png"
+        Recipe                = [ordered]@{
+            TimeSeconds      = 2 * $t.Tier
+            Input            = $t.Input
+            BenchRequirement = @([ordered]@{ Id = 'Workbench'; Type = 'Crafting'; Categories = @('Workbench_Tinkering'); RequiredTierLevel = $t.Tier })
+        }
+        BlockType             = [ordered]@{
+            Material           = 'Solid'
+            DrawType           = 'Cube'
+            Group              = 'Metal'
+            HitboxType         = 'Full'
+            Gathering          = @{ Breaking = @{ GatherType = 'Rocks' } }
+            BlockParticleSetId = 'Metal'
+            BlockSoundSetId    = 'Metal'
+            PhysicalMaterialId = 'Metal'
+            Textures           = @([ordered]@{ Weight = 1; UpDown = "BlockTextures/$($t.Id)_Top.png"; Sides = "BlockTextures/$($t.Id)_Side.png" })
+            ParticleColor      = $t.Particle
+        }
+        Tags                  = @{ Type = @('Furniture'); Family = @('NetworkStorage') }
+        IconProperties        = [ordered]@{ Scale = 0.58823; Rotation = @(22.5, 45, 22.5); Translation = @(0, -13.5) }
+        ItemSoundSetId        = 'ISS_Items_Metal'
+        MaxStack              = 50
+    }
+    Write-Json (Join-Path $itemDir "$($t.Id).json") $unit
+}
+
+Write-Host "Generados: $($shapes.Count) modelos del pipe, texturas, iconos, rule set y bloques del pipe y de las $($unitTiers.Count) units."

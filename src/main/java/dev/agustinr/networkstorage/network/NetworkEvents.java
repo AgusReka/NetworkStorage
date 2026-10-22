@@ -16,17 +16,22 @@ public final class NetworkEvents {
 
     private NetworkEvents() {}
 
+    /** Cuántas terminales y units tendría la red que se forma al poner un bloque. */
+    public record PlacementTotals(int terminals, int units) {}
+
     /**
-     * Cuántas terminales distintas quedarían conectadas si se pone un bloque en pos.
+     * Totales de la red que quedaría si se pone un bloque en pos (puede unir varias redes).
      * Se llama antes de que el bloque exista, así que se miran los vecinos.
      */
-    public static int terminalsAfterPlacing(@Nonnull World world, @Nonnull Vector3i pos, @Nonnull String placedId) {
+    public static PlacementTotals totalsAfterPlacing(@Nonnull World world, @Nonnull Vector3i pos, @Nonnull String placedId) {
         NetworkScanner scanner = new NetworkScanner(world);
         int terminals = NetworkBlocks.isTerminal(placedId) ? 1 : 0;
+        int units = NetworkBlocks.isUnit(placedId) ? 1 : 0;
         for (StorageNetwork network : scanner.scanAll(NetworkScanner.neighbors(pos), null)) {
             terminals += network.terminals().size();
+            units += network.units().size();
         }
-        return terminals;
+        return new PlacementTotals(terminals, units);
     }
 
     /** Recalcula la red después de poner un bloque. */

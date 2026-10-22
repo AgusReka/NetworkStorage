@@ -1,5 +1,5 @@
-items.NetworkStorage_Unit.name=Unidad de almacenamiento
-items.NetworkStorage_Unit.description=Agrega 18 espacios (dos filas) a la red conectada.
+items.NetworkStorage_Unit.name=Unidad de almacenamiento T1
+items.NetworkStorage_Unit.description=Agrega 18 espacios (dos filas) a la red conectada. Una red admite hasta 16 unidades.
 items.NetworkStorage_Terminal.name=Terminal de almacenamiento
 items.NetworkStorage_Terminal.description=Corazón de la red de almacenamiento. Guarda todos los objetos de la red y permite verlos, guardarlos y sacarlos.
 networkstorage.ui.title=Red de almacenamiento
@@ -9,3 +9,7 @@ networkstorage.ui.takeHint=Clic izquierdo: sacar un stack. Clic derecho: sacar u
 networkstorage.ui.depositHint=Clic izquierdo: guardar el stack. Clic derecho: guardar uno.
 items.NetworkStorage_Pipe.name=Tubo de almacenamiento
 items.NetworkStorage_Pipe.description=Conecta bloques de almacenamiento sin agregar capacidad.
+items.NetworkStorage_Unit_T2.name=Unidad de almacenamiento T2
+items.NetworkStorage_Unit_T2.description=Agrega 36 espacios (cuatro filas) a la red conectada. Se fabrica mejorando una unidad T1.
+items.NetworkStorage_Unit_T3.name=Unidad de almacenamiento T3
+items.NetworkStorage_Unit_T3.description=Agrega 54 espacios (seis filas) a la red conectada. Se fabrica mejorando una unidad T2.

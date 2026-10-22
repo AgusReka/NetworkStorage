@@ -70,6 +70,7 @@ public final class NetworkScanner {
         ArrayDeque<Vector3i> queue = new ArrayDeque<>();
         visited.add(start);
         queue.add(start);
+        int unitSlots = 0;
         boolean truncated = false;
 
         while (!queue.isEmpty()) {
@@ -79,6 +80,7 @@ public final class NetworkScanner {
                 terminals.add(pos);
             } else if (NetworkBlocks.isUnit(id)) {
                 units.add(pos);
+                unitSlots += NetworkBlocks.unitSlots(id);
             } else if (NetworkBlocks.isPipe(id)) {
                 pipes.add(pos);
             }
@@ -98,7 +100,7 @@ public final class NetworkScanner {
                 queue.add(next);
             }
         }
-        return new StorageNetwork(terminals, units, pipes, truncated);
+        return new StorageNetwork(terminals, units, pipes, unitSlots, truncated);
     }
 
     /** Redes distintas que tocan alguna de las posiciones dadas (sin repetir). */

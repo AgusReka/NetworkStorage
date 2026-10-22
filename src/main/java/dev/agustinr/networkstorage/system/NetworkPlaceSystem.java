@@ -39,11 +39,19 @@ public class NetworkPlaceSystem extends EntityEventSystem<EntityStore, PlaceBloc
         Vector3i pos = new Vector3i(event.getTargetBlock());
         PlayerRef player = store.getComponent(chunk.getReferenceTo(index), PlayerRef.getComponentType());
 
-        // Una red tiene exactamente una terminal: no dejamos poner un bloque que una dos.
-        if (NetworkEvents.terminalsAfterPlacing(world, pos, placedId) > 1) {
+        // Una red tiene exactamente una terminal y como mucho MAX_UNITS units.
+        NetworkEvents.PlacementTotals totals = NetworkEvents.totalsAfterPlacing(world, pos, placedId);
+        String problem = null;
+        if (totals.terminals() > 1) {
+            problem = "ese bloque conectaría dos terminales en la misma red.";
+        } else if (totals.units() > NetworkBlocks.MAX_UNITS) {
+            problem = "la red quedaría con " + totals.units() + " units y el máximo es " + NetworkBlocks.MAX_UNITS
+                    + ". Mejorá las units a un tier más alto para tener más espacio.";
+        }
+        if (problem != null) {
             event.setCancelled(true);
             if (player != null) {
-                player.sendMessage(Message.raw("[Network Storage] No se puede: ese bloque conectaría dos terminales en la misma red."));
+                player.sendMessage(Message.raw("[Network Storage] No se puede: " + problem));
             }
             return;
         }
