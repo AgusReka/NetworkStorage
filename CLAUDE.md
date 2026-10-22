@@ -87,3 +87,9 @@ Ojo: los eventos de bloques sin jugador (`DamageBlockEvent` de explosiones, `Env
 - Ejecutar el servidor local con la tarea/configuración que provee el template.
 - Conectarse con el cliente de Hytale al servidor local.
 - Instalación manual para un jugador: copiar el `.jar` a `%appdata%/Hytale/UserData/Mods/` (Windows).
+
+## Versiones
+
+- La versión se define en `gradle.properties` (`version`) y el build la escribe en `manifest.json`.
+- Para publicar una versión: subir `version`, correr `.\gradlew.bat clean build`, copiar `build/libs/NetworkStorage-<versión>.jar` a `releases/` (que sí se versiona en git), actualizar el README y crear el tag `v<versión>`.
+- 1.0.0: primera versión completa (Terminal de 2 bloques, Units T1/T2/T3, Pipes).

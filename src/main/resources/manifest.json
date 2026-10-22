@@ -1,8 +1,8 @@
 {
     "Group": "agustinr",
     "Name": "NetworkStorage",
-    "Version": "0.1.0",
-    "Description": "Red de almacenamiento centralizada (Storage Core, Units y Terminal), inspirada en Magic Storage.",
+    "Version": "1.0.0",
+    "Description": "Red de almacenamiento centralizada (Terminal, Storage Units y Pipes), inspirada en Magic Storage de Terraria.",
     "Authors": [
         {
             "Name": "agustinr"

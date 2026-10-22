@@ -1,161 +1,102 @@
-# Hytale Plugin Template
+# Network Storage
 
-A ready-to-use starting point for creating Hytale server plugins with Java, _or Kotlin_. If you've
-been using the Asset Editor and want to start writing server-side logic — custom commands, event
-handling, gameplay systems — this is the simplest place to begin.
+Mod para **Hytale** que agrega una red de almacenamiento centralizada: conectás bloques entre sí y
+accedés a todos tus ítems desde una sola terminal, con buscador y scroll.
 
-This template uses the [Hytale Gradle Plugin](https://github.com/AzureDoom/Hytale-Gradle-Plugin),
-a Gradle plugin maintained by AzureDoom for Hytale mod/plugin development. It handles the repetitive
-project setup work for you, including manifest generation, validation, local server runs, IDE source
-setup, and optional hosted Hytale Javadoc injection.
+Está inspirado en **[Magic Storage](https://github.com/blushiemagic/MagicStorage)**, el mod de
+Terraria (tModLoader) creado por **blushiemagic**. Ver [Créditos](#créditos).
 
-## How to start
+**Versión actual:** 1.0.0 · **Servidor de Hytale:** 0.7.2 (`>=0.7.2 <0.8.0`)
 
-1. Copy the template by downloading it or using the **Use this template** button.
-2. [Configure or install the Java SDK](https://hytalemodding.dev/en/docs/guides/plugin/setting-up-env)
-   to use Java 25. JetBrains Runtime is recommended for the best hot-reload/debugging experience.
-3. Open the project in your favorite IDE. We recommend
-   [IntelliJ IDEA](https://www.jetbrains.com/idea/download).
-4. Update the project values in `gradle.properties`:
-    - `rootProject.name` in `settings.gradle.kts`
-    - `group`
-    - `manifest_group`
-    - `mod_name`
-    - `mod_id`
-    - `main_class`
-    - `mod_author`
-    - `mod_description`
-    - `mod_url`
-5. Optionally run `./gradlew` if your IDE does not automatically sync the project.
-6. Prepare the Hytale development environment:
+## Instalación
 
-   ```bash
-   ./gradlew setupHytaleDev
-   ```
+1. Descargá el jar de [`releases/NetworkStorage-1.0.0.jar`](releases/NetworkStorage-1.0.0.jar).
+2. Copialo a la carpeta de mods de Hytale:
+   - Windows: `%appdata%/Hytale/UserData/Mods/`
+3. Para un servidor dedicado, ponelo en la carpeta de mods del servidor. Los jugadores que se
+   conectan no necesitan instalar nada: el servidor les manda los modelos, texturas y ventanas.
 
-7. Run the local development server:
+## Bloques
 
-   ```bash
-   ./gradlew runServer
-   ```
+| Bloque | Qué hace |
+|---|---|
+| **Storage Terminal** | Corazón de la red: guarda todos los ítems y abre la ventana para verlos, buscarlos, guardarlos y sacarlos. Es una consola de 2 bloques de ancho. Una red tiene una sola terminal. |
+| **Storage Unit T1 / T2 / T3** | Agregan capacidad a la red: 18, 36 y 54 espacios. No se abren. Una red admite hasta **16 units**. |
+| **Storage Pipe** | Conecta bloques de la red sin agregar espacio. Cambia de forma según lo que tenga alrededor. |
 
-> On Windows, use `./gradlew.bat` or `gradlew.bat` instead of `./gradlew`. The Gradle wrapper is
-> included so you do not need to install Gradle separately; only Java is required.
+Los bloques se conectan por cualquiera de sus 6 caras (sin diagonales).
 
-When the server starts, the output may prompt you to authorize your Hytale server. After that, you
-can begin developing your plugin while the server handles local development runs.
+## Recetas
 
-From here, the [HytaleModding guides](https://hytalemodding.dev/en/docs/guides/plugin/build-and-test)
-cover more details.
+Todas se fabrican en la **mesa de trabajo**, categoría Tinkering.
 
-## Hytale Gradle Plugin
+| Ítem | Ingredientes | Nivel de mesa |
+|---|---|---|
+| Storage Terminal | 5 lingotes de hierro, 5 de cobre, 1 de oro | 1 |
+| Storage Pipe (x4) | 1 lingote de hierro | 1 |
+| Storage Unit T1 | 5 lingotes de hierro, 5 de cobre | 1 |
+| Storage Unit T2 | 1 Storage Unit T1, 5 lingotes de cobalto, 5 de torio | 2 |
+| Storage Unit T3 | 1 Storage Unit T2, 5 lingotes de adamantita, 5 de mitrilo | 3 |
 
-This template is built around AzureDoom's `com.azuredoom.hytale-tools` Gradle plugin.
+## Cómo se usa
 
-The plugin is configured in `build.gradle.kts`:
+- Poné una **Terminal** y conectale **Units** directamente o con **Pipes**.
+- Usá la Terminal (tecla de interacción, `F` por defecto) para abrir la ventana de la red.
+  - **Ítems de la red:** clic izquierdo saca un stack; clic derecho saca uno.
+  - **Tu inventario:** clic izquierdo guarda el stack; clic derecho guarda uno.
+  - El **buscador** filtra por el nombre del ítem en tu idioma (sin importar tildes ni mayúsculas).
+- La ventana muestra los espacios usados y la capacidad. Si la red se llena (o queda sobrecargada
+  por romper units), todo sigue visible y se puede sacar, pero no acepta ítems nuevos hasta agregar
+  o mejorar units.
+- Las mesas de crafteo cercanas pueden usar los ítems guardados en la Terminal, igual que con un
+  cofre.
 
-```kotlin
-plugins {
-    idea
-    java
-    id("com.azuredoom.hytale-tools") version "1.+"
-}
+### Reglas importantes
+
+- **Romper una Unit no hace perder ítems:** solo baja la capacidad. Para mejorar una Unit, rompela,
+  mejorala en la mesa y volvé a ponerla.
+- **La Terminal no se puede romper mientras tenga ítems**, ni con herramientas ni con explosiones.
+  Vaciala antes de moverla.
+- No se puede poner un bloque que conecte **dos terminales** en la misma red ni que deje la red
+  con **más de 16 units**.
+
+### Multijugador
+
+Todo funciona del lado del servidor: los ítems se guardan en el mundo, sobreviven a reinicios y
+todos los jugadores ven la misma red. Si varios tienen la Terminal abierta, las ventanas se
+actualizan al instante y las acciones se procesan de a una, así que no se duplican ítems.
+
+## Desarrollo
+
+Requisitos: Java 25 y el launcher de Hytale instalado.
+
+```powershell
+.\gradlew.bat build                         # compila el jar en build/libs/
+.\gradlew.bat runServer --console=plain     # levanta un servidor local con el mod
 ```
 
-The AzureDoom Maven repository is configured in `settings.gradle.kts`:
+- El código está en `src/main/java/dev/agustinr/networkstorage/`.
+- Los modelos, texturas, íconos y JSON del Pipe, las Units y la Terminal se generan con
+  `tools/generate-assets.ps1`. No se editan a mano: se cambia el script y se vuelve a correr:
 
-```kotlin
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-        maven {
-            name = "AzureDoom Maven"
-            url = uri("https://maven.azuredoom.com/mods")
-        }
-    }
-}
-```
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File tools\generate-assets.ps1
+  ```
 
-Most plugin-specific settings are controlled from `gradle.properties` and passed into the
-`hytaleTools` block in `build.gradle.kts`. This keeps common project metadata in one easy-to-edit
-place.
+- `CLAUDE.md` tiene el diseño completo y las notas técnicas sobre la API de Hytale.
 
-For full plugin documentation, configuration options, tasks, and multi-project setup, visit the
-[Hytale Gradle Plugin repository](https://github.com/AzureDoom/Hytale-Gradle-Plugin).
+## Créditos
 
-## Useful commands
+- **[Magic Storage](https://github.com/blushiemagic/MagicStorage)** para Terraria, creado por
+  **blushiemagic** (con sprites de AdipemDragon). La idea de una red de
+  almacenamiento con unidades, una terminal central y una vista con todos los ítems agrupados viene
+  de ese mod. Network Storage es una reinterpretación para Hytale escrita desde cero: no usa código
+  ni assets de Magic Storage.
+- **[Hytale Plugin Template](https://github.com/AzureDoom/plugin-template)** y el Gradle plugin
+  `com.azuredoom.hytale-tools`, de **AzureDoom**, como base del proyecto.
+- Estilo visual inspirado en la tecnología goblin de Hytale.
 
-```bash
-# Sync/setup the local Hytale development environment
-./gradlew setupHytaleDev
+Network Storage es un mod de fans y no está afiliado a Hypixel Studios, Re-Logic ni a los autores de
+Magic Storage.
 
-# Run the local Hytale server
-./gradlew runServer
-
-# Run the server with debugging and hot swap enabled
-./gradlew runServer -Ddebug=true -Dhotswap=true
-
-# Check your JVM and hot swap setup
-./gradlew hytaleJvmDoctor
-
-# Build the plugin
-./gradlew build
-
-# Refresh dependencies if something fails to resolve
-./gradlew build --refresh-dependencies
-```
-
-## Project structure
-
-```text
-src/main/java/        Plugin source code
-src/main/resources/   Plugin resources, including manifest.json
-gradle.properties     Main template configuration
-build.gradle.kts      Gradle build and Hytale Gradle Plugin configuration
-settings.gradle.kts   Plugin repositories and project name
-```
-
-## Manifest configuration
-
-The generated `manifest.json` is driven by the values in `gradle.properties`, including:
-
-- `manifest_group`
-- `mod_id`
-- `version`
-- `mod_description`
-- `mod_author`
-- `mod_url`
-- `main_class`
-- `manifest_dependencies`
-- `manifest_opt_dependencies`
-- `manifestServerVersion`
-
-After changing these values, run:
-
-```bash
-./gradlew updatePluginManifest
-```
-
-## Troubleshooting
-
-- **Gradle sync fails in IntelliJ** — Check that Java 25 is installed and configured under
-  **File → Project Structure → SDKs**.
-- **The Hytale Gradle Plugin does not resolve** — Make sure `settings.gradle.kts` includes the
-  AzureDoom Maven repository at `https://maven.azuredoom.com/mods`.
-- **Build fails with missing dependencies** — Run `./gradlew build --refresh-dependencies` and make
-  sure you have internet access.
-- **Permission denied on `./gradlew`** — Run `chmod +x gradlew` on macOS/Linux.
-- **Hot reload or enhanced class redefinition does not work** — Use JetBrains Runtime and try
-  `./gradlew hytaleJvmDoctor` to verify your JVM setup.
-
-## Resources
-
-- [Hytale Gradle Plugin](https://github.com/AzureDoom/Hytale-Gradle-Plugin)
-- [Hytale Modding Guides](https://hytalemodding.dev)
-- [Hytale Modding Discord](https://discord.gg/hytalemodding)
-
-## License
-
-Add your own license after copying the template. We recommend MIT, BSD, or Apache to keep the
-modding community open.
+**Autor:** agustinr
